@@ -814,6 +814,13 @@ private[effect] abstract class IOInstances extends IOLowPriorityInstances {
       par(IO.unit)
   }
 
+  implicit def parAlternative(implicit cs: ContextShift[IO]): Alternative[IO.Par] = new Alternative[IO.Par] {
+    import IO.Par.{unwrap, apply => par}
+    def pure[A](x: A): IO.Par[A] = par(IO.pure(x))
+    def ap[A, B](ff: IO.Par[A => B])(fa: IO.Par[A]): IO.Par[B] = map2(ff,fa)(_(_))
+    def empty[A]: IO.Par[A] = par(IO.never)q
+  }
+
   implicit def ioConcurrentEffect(implicit cs: ContextShift[IO]): ConcurrentEffect[IO] =
     new IOEffect with ConcurrentEffect[IO] {
       final override def start[A](fa: IO[A]): IO[Fiber[IO, A]] =
